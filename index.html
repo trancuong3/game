@@ -1,32 +1,267 @@
-<!doctype html>
-<html class="no-js" lang="">
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
-  <link rel="stylesheet" href="css/style.css">
-  <meta name="description" content="">
+  <meta charset="UTF-8">
+  <title>Geometry Jump</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom, #87CEEB, #FFFFFF);
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
 
-  <meta property="og:title" content="">
-  <meta property="og:type" content="">
-  <meta property="og:url" content="">
-  <meta property="og:image" content="">
+    #gameContainer {
+      text-align: center;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
 
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.png">
+    #Canvas {
+      border: 1px solid black;
+      border-radius: 5px;
+      background-color: #FFF;
+    }
 
-  <link rel="manifest" href="site.webmanifest">
-  <meta name="theme-color" content="#fafafa">
+    #startButton, #restartButton {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    #startButton:hover, #restartButton:hover {
+      background-color: #45a049;
+    }
+
+    #collisionScore {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+      color: #333;
+    }
+  </style>
 </head>
-
 <body>
-
-  <!-- Add your site or application content here -->
-  <p>Hello world! This is HTML5 Boilerplate.</p>
-  <script src="js/app.js"></script>
-
+<div id="gameContainer">
+  <h1>Geometry Jump</h1>
+  <div>
+    <label for="colorPicker">Chọn màu sắc của hình vuông:</label>
+    <input type="color" id="colorPicker">
+  </div>
+  <button id="startButton">Bắt đầu</button>
+  <button id="restartButton" style="display:none;">Chơi lại</button>
+  <div id="collisionScore" style="display:none;">Score: 0</div>
+  <canvas id="Canvas" width="800" height="350"></canvas>
+</div>
 </body>
+<audio id="backgroundMusic" loop>
+  <source src="https://raw.githubusercontent.com/trancuong3/music-1/main/1_Y2meta.app%20-%20Geometry%20Dash%20-%20Jumper%20%5BFULL%20SONG%20DOWNLOAD%5D%20(128%20kbps).mp3" type="audio/mpeg">
+</audio>
+<audio id="jumpSound">
+  <source src="https://raw.githubusercontent.com/trancuong3/music-1/main/Hieu-ung-am-thanh-Nhay-Qua-Buoc-Qua-tiengdong_com.mp3" type="audio/mpeg">
+</audio>
+<script>
+  class Shape {
+    constructor(x, y, size, color, shapeType, speed, acceleration) {
+      this.x = x;
+      this.y = y;
+      this.size = size;
+      this.color = color;
+      this.canvas = document.getElementById("Canvas");
+      this.ctx = this.canvas.getContext("2d");
+      this.shapeType = shapeType;
+      this.speed = speed;
+      this.acceleration = acceleration;
+      this.jump = false;
+      this.onBlock = false;
+    }
+    setJump(j) {
+      this.jump = j;
+    }
+    draw() {
+      this.ctx.beginPath();
+      if (this.shapeType === 'circle') {
+        this.ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      } else if (this.shapeType === 'square') {
+        this.ctx.rect(this.x, this.y, this.size, this.size);
+      }
+      this.ctx.fillStyle = this.color;
+      this.ctx.fill();
+    }
+    moveRight() {
+      this.x += this.speed;
+      this.speed += this.acceleration;
 
+      if (this.y > this.canvas.height - this.size) {
+        this.y = this.canvas.height - this.size;
+      }
+      if (this.x > this.canvas.width - this.size) {
+        this.x = this.canvas.width - this.size;
+      }
+    }
+    jumpAction() {
+      if (this.jump) {
+        this.y -= 130;
+        this.jump = false;
+        setTimeout(() => {
+          this.y += 130;
+        }, 350);
+      }
+    }
+  }
+  const canvas = document.getElementById("Canvas");
+  const ctx = canvas.getContext("2d");
+  let score = 0;
+  let square;
+  let blocks = [];
+  let blocks1 = [];
+  let startTime = 0;
+  let jumping = false;
+  let gameStarted = false; // Biến kiểm tra trạng thái của trò chơi
+  function generateBlock() {
+    let size = Math.floor(Math.random() * 70) + 25;
+    let x = canvas.width + size;
+    let y = canvas.height - size;
+    let currentTime = Date.now();
+    let elapsedTime = (currentTime - startTime) / 1000;
+    let speed = -3 - (elapsedTime * 0.01);
+    let acceleration = -0.005;
+    speed+=acceleration;
+    let block = new Shape(x, y, size, 'green', 'square', speed, acceleration);
+    blocks.push(block);
+  }
+  function generateBlock1() {
+    let size = Math.floor(Math.random() * 80) + 25;
+    let x = canvas.width + size;
+    let y = canvas.height - size;
+    let currentTime = Date.now();
+    let elapsedTime = (currentTime - startTime) / 1000;
+    let speed = -1.9 - (elapsedTime * 0.01);
+    let acceleration = -0.005;
+    speed+=acceleration;
+    let block = new Shape(x, 150, size, 'green', 'square', speed, acceleration);
+    let block1 = new Shape(x, 50, size, 'green', 'square', speed, acceleration);
+    blocks1.push(block);
+    blocks1.push(block1);
+  }
+  function drawBlocks() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    square.draw();
+    blocks.forEach(block => {
+      block.moveRight();
+      block.draw();
+    });
+    blocks1.forEach(block => {
+      block.moveRight();
+      block.draw();
+    });
+  }
+  function checkCollision() {
+    blocks.forEach((block, index) => {
+      if (square.x < block.x + block.size &&
+        square.x + square.size > block.x &&
+        square.y < block.y + block.size &&
+        square.y + square.size > block.y) {
+        if (block.shapeType === 'circle') {
+          blocks.splice(index, 1);
+          score += 5;
+          document.getElementById('collisionScore').innerText = 'Score: ' + score;
+          document.getElementById('collisionScore').style.display = 'block';
+        } else if (square.x + square.size >= block.x && square.x <= block.x + block.size) {
+          square.speed = 0;
+          pauseMusic();
+          square.acceleration = 0;
+          document.getElementById('collisionScore').innerText = 'Score: ' + score;
+          document.getElementById('collisionScore').style.display = 'block';
+          document.getElementById('restartButton').style.display = 'block';
+        }
+      } else if (square.x > block.x + block.size && !block.onBlock) {
+        block.onBlock = true;
+        score += 5;
+        document.getElementById('collisionScore').innerText = 'Score: ' + score;
+        document.getElementById('collisionScore').style.display = 'block';
+      }
+    });
+  }
+  function checkCollision1() {
+    blocks1.forEach((block, index) => {
+      if (square.x < block.x + block.size &&
+        square.x + square.size > block.x &&
+        square.y < block.y + block.size &&
+        square.y + square.size > block.y) {
+        square.speed = 0;
+        square.acceleration = 0;
+        pauseMusic();
+        document.getElementById('collisionScore').innerText = 'Score: ' + score;
+        document.getElementById('collisionScore').style.display = 'block';
+        document.getElementById('restartButton').style.display = 'block';
+      }
+    });
+  }
+
+  function pauseMusic() {
+    const backgroundMusic = document.getElementById("backgroundMusic");
+    backgroundMusic.pause();
+  }
+  function moveSquare() {
+    square.moveRight();
+    drawBlocks();
+    checkCollision();
+    checkCollision1();
+    if (square.speed !== 0) {
+      requestAnimationFrame(moveSquare);
+    }
+  }
+
+  function startGame() {
+    const backgroundMusic = document.getElementById("backgroundMusic");
+    backgroundMusic.play();
+    let color = document.getElementById("colorPicker").value;
+    square = new Shape(40, canvas.height - 50, 50, color, 'square', 0.001, 0);
+    square.draw();
+    startTime = Date.now();
+    generateBlock();
+    setInterval(generateBlock, 2000);
+    generateBlock1();
+    setInterval(generateBlock1, 7000);
+    moveSquare();
+    gameStarted = true; // Khi bắt đầu trò chơi, cập nhật trạng thái
+    document.getElementById('startButton').style.display = 'none'; // Ẩn nút "Bắt đầu"
+  }
+
+  function restartGame() {
+    window.location.reload();
+  }
+
+  document.getElementById("startButton").addEventListener("click", startGame);
+
+  document.getElementById('restartButton').addEventListener("click", restartGame);
+
+  canvas.addEventListener("click", () => {
+    if (square) {
+      square.setJump(true);
+      square.jumpAction();
+      square.draw();
+      if (!jumping) {
+        const jumpSound = document.getElementById("jumpSound");
+        jumpSound.play();
+        jumping = true;
+        setTimeout(() => {
+          jumping = false;
+        }, 100);
+      }
+    }
+  });
+</script>
 </html>
