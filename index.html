@@ -1,171 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html class="no-js" lang="">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Geometry Jump</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="">
+
+  <meta property="og:title" content="">
+  <meta property="og:type" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#fafafa">
 </head>
+
 <body>
-<div>
-    <label for="colorPicker">Chọn màu sắc của hình vuông:</label>
-    <input type="color" id="colorPicker">
-    <button id="startButton">Bắt đầu</button>
-</div>
-<canvas id="Canvas" width="3000" height="500" style="border:1px solid black"></canvas>
-<div id="collisionScore">Score: 0</div>
-<button id="restartButton" style="display:none;">Chơi lại</button>
+
+  <!-- Add your site or application content here -->
+  <p>Hello world! This is HTML5 Boilerplate.</p>
+  <script src="js/app.js"></script>
+
 </body>
-<audio id="backgroundMusic" loop>
-    <source src="https://raw.githubusercontent.com/trancuong3/music-1/main/1_Y2meta.app%20-%20Geometry%20Dash%20-%20Jumper%20%5BFULL%20SONG%20DOWNLOAD%5D%20(128%20kbps).mp3
-" type="audio/mpeg">
-</audio>
-<audio id="jumpSound">
-    <source src="https://raw.githubusercontent.com/trancuong3/music-1/main/Hieu-ung-am-thanh-Nhay-Qua-Buoc-Qua-tiengdong_com.mp3" type="audio/mpeg">
-</audio>
-<script>
-    class Shape {
-        constructor(x, y, size, color, shapeType, speed, acceleration) {
-            this.x = x;
-            this.y = y;
-            this.size = size;
-            this.color = color;
-            this.canvas = document.getElementById("Canvas");
-            this.ctx = this.canvas.getContext("2d");
-            this.shapeType = shapeType;
-            this.speed = speed;
-            this.acceleration = acceleration;
-            this.jump = false;
-            this.onBlock = false;
-        }
-        setJump(j) {
-            this.jump = j;
-        }
-        draw() {
-            this.ctx.beginPath();
-            if (this.shapeType === 'circle') {
-                this.ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            } else if (this.shapeType === 'square') {
-                this.ctx.rect(this.x, this.y, this.size, this.size);
-            }
-            this.ctx.fillStyle = this.color;
-            this.ctx.fill();
-        }
-        moveRight() {
-            this.x += this.speed;
-            this.speed += this.acceleration;
 
-            if (this.y > this.canvas.height - this.size) {
-                this.y = this.canvas.height - this.size;
-            }
-            if (this.x > this.canvas.width - this.size) {
-                this.x = this.canvas.width - this.size;
-            }
-        }
-        jumpAction() {
-            if (this.jump) {
-                this.y -= 150;
-                this.jump = false;
-                setTimeout(() => {
-                    this.y += 150;
-                }, 350);
-            }
-        }
-    }
-    const canvas = document.getElementById("Canvas");
-    const ctx = canvas.getContext("2d");
-    let score = 0;
-    let square;
-    let blocks = [];
-    let startTime = 0;
-    let jumping = false;
-    function generateBlock() {
-        let size = Math.floor(Math.random() * 100) + 25;
-        let x = canvas.width + size;
-        let y = canvas.height - size;
-        let currentTime = Date.now();
-        let elapsedTime = (currentTime - startTime) / 1000;
-        let speed = -0.78 - (elapsedTime * 0.01);
-        let acceleration = -0.005;
-        speed+=acceleration;
-        let block = new Shape(x, y, size, 'green', 'square', speed, acceleration);
-        blocks.push(block);
-    }
-    function drawBlocks() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        square.draw();
-        blocks.forEach(block => {
-            block.moveRight();
-            block.draw();
-        });
-    }
-    function checkCollision() {
-        blocks.forEach((block, index) => {
-            if (square.x < block.x + block.size &&
-                square.x + square.size > block.x &&
-                square.y < block.y + block.size &&
-                square.y + square.size > block.y) {
-                if (block.shapeType === 'circle') {
-                    blocks.splice(index, 1);
-                    score += 5;
-                    document.getElementById('collisionScore').innerText = 'Score: ' + score;
-                    document.getElementById('collisionScore').style.display = 'block';
-                } else if (square.x + square.size >= block.x && square.x <= block.x + block.size) {
-                    square.speed = 0;
-                    pauseMusic();
-                    square.acceleration = 0;
-                    document.getElementById('collisionScore').innerText = 'Score: ' + score;
-                    document.getElementById('collisionScore').style.display = 'block';
-                    document.getElementById('restartButton').style.display = 'block';
-                }
-            } else if (square.x > block.x + block.size && !block.onBlock) {
-                block.onBlock = true;
-                score += 5;
-                document.getElementById('collisionScore').innerText = 'Score: ' + score;
-                document.getElementById('collisionScore').style.display = 'block';
-            }
-        });
-    }
-    function pauseMusic() {
-        const backgroundMusic = document.getElementById("backgroundMusic");
-        backgroundMusic.pause();
-    }
-    function moveSquare() {
-        square.moveRight();
-        drawBlocks();
-        checkCollision();
-        if (square.speed !== 0) {
-            requestAnimationFrame(moveSquare);
-        }
-    }
-    function startGame() {
-        const backgroundMusic = document.getElementById("backgroundMusic");
-        backgroundMusic.play();
-        let color = document.getElementById("colorPicker").value;
-        square = new Shape(40, canvas.height - 50, 50, color, 'square', 0.001, 0);
-        square.draw();
-        startTime = Date.now();
-        generateBlock();
-        setInterval(generateBlock, 2000);
-        moveSquare();
-    }
-    document.getElementById("startButton").addEventListener("click", startGame);
-
-    document.getElementById('restartButton').addEventListener("click", () => {
-        window.location.reload();
-    });
-    canvas.addEventListener("click", () => {
-        if (square) {
-            square.setJump(true);
-            square.jumpAction();
-            square.draw();
-            if (!jumping) {
-                const jumpSound = document.getElementById("jumpSound");
-                jumpSound.play();
-                jumping = true;
-                setTimeout(() => {
-                    jumping = false;
-                }, 100);
-            }
-        }
-    });
-</script>
 </html>
